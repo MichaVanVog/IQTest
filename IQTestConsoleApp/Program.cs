@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using IQTestLibrary;
 
 namespace IQTestConsoleApp;
 
@@ -9,12 +10,14 @@ class Program
         Console.OutputEncoding = Encoding.Unicode;
         Console.InputEncoding = Encoding.Unicode;
 
-        var questions = GetQuestions();
-        var countRightAnswers = 0;
+        var questions = QuestionStorage.GetQuestions();
         var countQuestions = questions.Count;
         bool isValid;
-
         var random = new Random();
+
+        Console.WriteLine("Введите Ваше имя:");
+
+        var user = new User(Console.ReadLine() ?? "Неизвестно");
 
         for (int i = 0; i < countQuestions; i++)
         {
@@ -35,69 +38,27 @@ class Program
                 {
                     if (userAnswer == questions[randomIndex].Answer)
                     {
-                        countRightAnswers++;
+                        user.AcceptRightAnswers();
                     }
                 }
             }
             while (!isValid);
             questions.RemoveAt(randomIndex);
         }
-        Console.WriteLine($"Количество правильных ответов: {countRightAnswers}");
+        Console.WriteLine($"Количество правильных ответов: {user.CountRightAnswers}");
+        Diagnoses.CalculateGiagnose(user, countQuestions);
+        Console.WriteLine($"Ваш диагноз: {user.Diagnose}");
 
-        var diagnose = GetDiagnoses();
-        var rightPercentOfAnswers = countRightAnswers * 100 / countQuestions;
-        if (rightPercentOfAnswers <= 0)
-        {
-            Console.WriteLine($"Ваш диагноз: {diagnose[0]}");
-            return;
-        }
-        if (rightPercentOfAnswers <= 20)
-        {
-            Console.WriteLine($"Ваш диагноз: {diagnose[1]}");
-            return;
-        }
-        if (rightPercentOfAnswers <= 40)
-        {
-            Console.WriteLine($"Ваш диагноз: {diagnose[2]}");
-            return;
-        }
-        if (rightPercentOfAnswers <= 60)
-        {
-            Console.WriteLine($"Ваш диагноз: {diagnose[3]}");
-            return;
-        }
-        if (rightPercentOfAnswers <= 80)
-        {
-            Console.WriteLine($"Ваш диагноз: {diagnose[4]}");
-            return;
-        }
-        if (rightPercentOfAnswers <= 100)
-        {
-            Console.WriteLine($"Ваш диагноз: {diagnose[5]}");
-            return;
-        }
-    }
+        FileProvider.Save(user);
 
-    static List<string> GetDiagnoses()
-    {
-        var diagnose = new List<string>();
-        diagnose.Add("Идиот");
-        diagnose.Add("Кретин");
-        diagnose.Add("Дурак");
-        diagnose.Add("Нормальный");
-        diagnose.Add("Талант");
-        diagnose.Add("Гений");
-        return diagnose;
-    }
-
-    static List<Question> GetQuestions()
-    {
-        List<Question> questions = new();
-        questions.Add(new Question("Сколько будет два плюс два умноженное на два?", 6));
-        questions.Add(new Question("Бревно нужно распилить на 10 частей, сколько надо сделать распилов?", 9));
-        questions.Add(new Question("На двух руках 10 пальцев. Сколько пальцев на 5 руках?", 25));
-        questions.Add(new Question("Укол делают каждые полчаса, сколько нужно минут для трех уколов?", 60));
-        questions.Add(new Question("Пять свечей горело, две потухли. Сколько свечей осталось?", 2));
-        return questions;
+        Console.WriteLine("Нажмите пробел для просмотра предудыщих результатов тестов\n");
+        if (Console.ReadKey().Key == ConsoleKey.Spacebar)
+        {
+            var resultsFromFile = FileProvider.Load().Split('&');
+            for (int i = 0; i < resultsFromFile.Length-3; i += 3)
+            {
+                Console.WriteLine($"Имя: {resultsFromFile[i]}\nКоличество правильных ответов: {resultsFromFile[i+1]}\nДиагноз: {resultsFromFile[i + 2]}\n");
+            }
+        }
     }
 }
