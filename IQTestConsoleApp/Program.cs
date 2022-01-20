@@ -49,13 +49,13 @@ class Program
         Diagnoses.CalculateGiagnose(user, countQuestions);
         Console.WriteLine($"Ваш диагноз: {user.Diagnose}");
 
-        FileProvider.Save(user);
+        UserResultsStorage.Append(user);
 
         Console.WriteLine("Нажмите пробел для просмотра предудыщих результатов тестов\n");
         if (Console.ReadKey().Key == ConsoleKey.Spacebar)
         {
-            var resultsFromFile = FileProvider.Load().Split('&');
-            for (int i = 0; i < resultsFromFile.Length-3; i += 3)
+            var resultsFromFile = UserResultsStorage.GetAll();
+            for (int i = 0; i < resultsFromFile.Count-3; i += 3)
             {
                 Console.WriteLine($"Имя: {resultsFromFile[i]}\nКоличество правильных ответов: {resultsFromFile[i+1]}\nДиагноз: {resultsFromFile[i + 2]}\n");
             }

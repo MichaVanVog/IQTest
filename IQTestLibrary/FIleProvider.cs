@@ -2,18 +2,29 @@
 {
     public class FileProvider
     {
-        private static string? Path { get; }
-
-        public static void Save(User user)
+        public static void Append(string path, string value)
         {
-            using var streamWriter = new StreamWriter(Path ?? "UserResults.txt", true, System.Text.Encoding.Unicode);
-            streamWriter.Write($"{user.Name}&{user.CountRightAnswers}&{user.Diagnose}&");
+            using var streamWriter = new StreamWriter(path, true, System.Text.Encoding.Unicode);
+            streamWriter.WriteLine(value);
+            streamWriter.Close();
         }
 
-        public static string Load()
+        public static void Replace (string path, string value)
         {
-            using var streamReader = new StreamReader(Path ?? "UserResults.txt", System.Text.Encoding.Unicode);
-            return streamReader.ReadToEnd();
+
+        }
+
+        public static string Get(string path)
+        {
+            using var streamReader = new StreamReader(path, System.Text.Encoding.Unicode);
+            var value = streamReader.ReadToEnd();
+            streamReader.Close();
+            return value;
+        }
+
+        public static bool Exists (string path)
+        {
+            return File.Exists(path);
         }
     }
 }
