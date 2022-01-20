@@ -4,7 +4,7 @@ namespace IQTestFormsApp
 {
     public partial class MainForm : Form
     {
-        private List<Question> questions;
+        private Game game;
         private Question currentQuestion;
         private int countQuestions;
         private User user;
@@ -17,19 +17,24 @@ namespace IQTestFormsApp
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            questions = QuestionStorage.GetQuestions();
-            countQuestions = questions.Count;
             user = new User("Неизвестно");
+            var userInfoForm = new UserInfoForm(user);
+            var result = userInfoForm.ShowDialog(this);
+            if (result != DialogResult.OK)
+            {
+                Close();
+            }
 
-            ShowNextQuestion();
+            else
+            {
+                game = new Game(user);
+                ShowNextQuestion();
+            }
         }
 
         private void ShowNextQuestion()
         {
-            var random = new Random();
-            var randomIndex = random.Next(questions.Count);
-
-            currentQuestion = questions[randomIndex];
+            currentQuestion = game.PopRandomQuestion();
             QuestionLabel.Text = currentQuestion.QuestionText;
 
             CountQuestionLabel.Text = $"Вопрос № {questionNumber}";
@@ -43,9 +48,8 @@ namespace IQTestFormsApp
             {
                 user.AcceptRightAnswers();
             }
-            questions.Remove(currentQuestion);
 
-            if (questions.Count == 0)
+            if (game.End())
             {
                 Diagnoses.CalculateGiagnose(user, countQuestions);
                 MessageBox.Show(user.Diagnose, "Диагноз", MessageBoxButtons.OK, MessageBoxIcon.Information);

@@ -5,60 +5,75 @@ namespace IQTestConsoleApp;
 
 class Program
 {
-    static void Main()
+    static void Main(string[] args)
     {
-        Console.OutputEncoding = Encoding.Unicode;
-        Console.InputEncoding = Encoding.Unicode;
-
-        var questions = QuestionStorage.GetQuestions();
-        var countQuestions = questions.Count;
-        bool isValid;
-        var random = new Random();
-
-        Console.WriteLine("Введите Ваше имя:");
-
-        var user = new User(Console.ReadLine() ?? "Неизвестно");
-
-        for (int i = 0; i < countQuestions; i++)
+        Console.WriteLine("Как тебя зовут?");
+        var user = new User(Console.ReadLine());
+        var game = new Game(user);
+        while (!game.End())
         {
-            Console.WriteLine($"Вопрос № {i + 1}");
+            var currentQuestion = game.PopRandomQuestion();
+            Console.WriteLine(game.GetQuestionNumberInfo());
 
-            var randomIndex = random.Next(0, questions.Count);
-            Console.WriteLine(questions[randomIndex].QuestionText);
-
-            do
-            {
-                isValid = int.TryParse(Console.ReadLine(), out var userAnswer);
-                if (!isValid || userAnswer < 0)
-                {
-                    Console.WriteLine("Неправильный ввод. \nВведите цифры!");
-                    isValid = false;
-                }
-                else
-                {
-                    if (userAnswer == questions[randomIndex].Answer)
-                    {
-                        user.AcceptRightAnswers();
-                    }
-                }
-            }
-            while (!isValid);
-            questions.RemoveAt(randomIndex);
+            Console.WriteLine(currentQuestion.QuestionText);
+            var userAnswer = GetUserAnswer();
+            game.AcceptAnswer(userAnswer);
         }
-        Console.WriteLine($"Количество правильных ответов: {user.CountRightAnswers}");
-        Diagnoses.CalculateGiagnose(user, countQuestions);
-        Console.WriteLine($"Ваш диагноз: {user.Diagnose}");
+
+        Console.WriteLine("Количество правильных ответов: " + user.CountRightAnswers);
+        Console.WriteLine(game.CalculateDiagnose());
 
         UserResultsStorage.Append(user);
 
-        Console.WriteLine("Нажмите пробел для просмотра предудыщих результатов тестов\n");
-        if (Console.ReadKey().Key == ConsoleKey.Spacebar)
+        Console.WriteLine("Хотите посмотреть предыдущие результаты игр? Нажми Y/N?");
+        var input = Console.ReadKey();
+        Console.WriteLine();
+        if (input.Key == ConsoleKey.Y)
         {
-            var resultsFromFile = UserResultsStorage.GetAll();
-            for (int i = 0; i < resultsFromFile.Count-3; i += 3)
-            {
-                Console.WriteLine($"Имя: {resultsFromFile[i]}\nКоличество правильных ответов: {resultsFromFile[i+1]}\nДиагноз: {resultsFromFile[i + 2]}\n");
-            }
+            var users = UserResultsStorage.GetAll();
+            ViewUserResult(users);
         }
+
+        Console.WriteLine("Хотите добавить новый вопрос? Нажми Y/N?");
+        input = Console.ReadKey();
+        Console.WriteLine();
+        if (input.Key == ConsoleKey.Y)
+        {
+            var newQuestion = GetNewQuestion();
+            QuestionStorage.Add(newQuestion);
+        }
+
+    }
+
+    private static Question GetNewQuestion()
+    {
+        Console.WriteLine("Введите текст вопроса");
+        var text = Console.ReadLine();
+
+        Console.WriteLine("Введите ответ для вопроса");
+        var answer = GetUserAnswer();
+        var newQuestion = new Question(text, answer);
+        return newQuestion;
+    }
+
+    private static void ViewUserResult(List<User> users)
+    {
+        Console.WriteLine("{0,-20}{1,-40}{2,-10}", "Имя", "Кол-во правильных ответов", "Диагноз");
+
+        foreach (var user in users)
+        {
+            Console.WriteLine("{0,-20}{1,-40}{2,-10}", user.Name, user.CountRightAnswers, user.Diagnose);
+        }
+    }
+
+    private static int GetUserAnswer()
+    {
+        var isValid = User.IsValid(Console.ReadLine(), out var userAnswer, out var errorMessage);
+        while (!isValid)
+        {
+            Console.WriteLine(errorMessage);
+            isValid = User.IsValid(Console.ReadLine(), out userAnswer, out errorMessage);
+        }
+        return userAnswer;
     }
 }
